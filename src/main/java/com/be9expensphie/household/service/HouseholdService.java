@@ -26,7 +26,6 @@ public class HouseholdService {
 
     private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository householdMemberRepository;
-    private final UserSummaryRepository userSummaryRepository;
     private final HouseholdMemberEventProducer householdMemberEventProducer;
 
     @Transactional
@@ -49,7 +48,7 @@ public class HouseholdService {
                 .build();
         householdMemberRepository.save(member);
 
-        householdMemberEventProducer.publish(member, household, "MEMBER_JOINED", userSummaryRepository);
+        householdMemberEventProducer.publish(member, household, "MEMBER_JOINED");
 
         return CreateResponse.builder()
                 .id(household.getId())
@@ -73,7 +72,7 @@ public class HouseholdService {
                     .role(HouseholdRole.ROLE_MEMBER)
                     .build();
             HouseholdMember saved = householdMemberRepository.save(newMember);
-            householdMemberEventProducer.publish(saved, household, "MEMBER_JOINED", userSummaryRepository);
+            householdMemberEventProducer.publish(saved, household, "MEMBER_JOINED");
             return saved;
         });
 
