@@ -1,6 +1,7 @@
 package com.be9expensphie.household.config;
 
 import com.be9expensphie.common.event.EmailEvent;
+import com.be9expensphie.common.event.HouseholdMemberEvent;
 import com.be9expensphie.common.event.UserEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -21,31 +22,17 @@ public class KafkaProducerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    private Map<String, Object> baseConfig() {
-        Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return config;
+    @Bean
+    public ProducerFactory<String, HouseholdMemberEvent> householdMemberProducerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(props);
     }
 
     @Bean
-    public ProducerFactory<String, EmailEvent> emailProducerFactory() {
-        return new DefaultKafkaProducerFactory<>(baseConfig());
-    }
-
-    @Bean
-    public KafkaTemplate<String, EmailEvent> emailKafkaTemplate() {
-        return new KafkaTemplate<>(emailProducerFactory());
-    }
-
-    @Bean
-    public ProducerFactory<String, UserEvent> userProducerFactory() {
-        return new DefaultKafkaProducerFactory<>(baseConfig());
-    }
-
-    @Bean
-    public KafkaTemplate<String, UserEvent> userKafkaTemplate() {
-        return new KafkaTemplate<>(userProducerFactory());
+    public KafkaTemplate<String, HouseholdMemberEvent> kafkaTemplate() {
+        return new KafkaTemplate<>(householdMemberProducerFactory());
     }
 }
