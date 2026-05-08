@@ -8,6 +8,7 @@ import com.be9expensphie.household.dto.JoinHouseholdDTO.JoinHouseholdResponseDTO
 import com.be9expensphie.household.service.HouseholdService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +34,7 @@ public class HouseholdController {
             @Valid @RequestBody JoinHouseholdRequestDTO request,
             @RequestHeader("X-User-Id") Long userId
     ) {
-        return ResponseEntity.ok(householdService.joinHousehold(request, userId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(householdService.joinHousehold(request, userId));
     }
 
     @GetMapping("/my")

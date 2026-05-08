@@ -18,9 +18,12 @@ public class HouseholdMemberService {
     private final HouseholdRepository householdRepo;
     private final UserSummaryRepository userSummaryRepository;
 
-    public List<MemberDTO> getMembers(Long householdId) {
+    public List<MemberDTO> getMembers(Long householdId, Long requestingUserId) {
         householdRepo.findById(householdId)
                 .orElseThrow(() -> new RuntimeException("Household not found"));
+
+        memberRepo.findByUserIdAndHouseholdId(requestingUserId, householdId)
+                .orElseThrow(() -> new RuntimeException("Access denied: not a member of this household"));
 
         List<HouseholdMember> members = memberRepo.findByHouseholdId(householdId);
         return members.stream()

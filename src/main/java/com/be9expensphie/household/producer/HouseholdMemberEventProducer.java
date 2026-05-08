@@ -18,12 +18,9 @@ public class HouseholdMemberEventProducer {
     private final UserSummaryRepository userSummaryRepository;
 
     public void publish(HouseholdMember member, Household household, String eventType) {
-        String fullName = userSummaryRepository.findByUserId(member.getUserId())
-                .map(u -> u.getFullName())
-                .orElse("");
-        String email = userSummaryRepository.findByUserId(member.getUserId())
-                .map(u -> u.getEmail())
-                .orElse("");
+        var summary = userSummaryRepository.findByUserId(member.getUserId()).orElse(null);
+        String fullName = summary != null ? summary.getFullName() : "";
+        String email = summary != null ? summary.getEmail() : "";
 
         HouseholdMemberEvent event = HouseholdMemberEvent.builder()
                 .memberId(member.getId())

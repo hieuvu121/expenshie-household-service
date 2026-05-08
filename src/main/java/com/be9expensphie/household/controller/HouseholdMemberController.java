@@ -16,7 +16,10 @@ public class HouseholdMemberController {
     private final HouseholdMemberService memberService;
 
     @GetMapping("/{householdId}/members")
-    public ResponseEntity<List<MemberDTO>> getMembers(@PathVariable Long householdId) {
-        return ResponseEntity.ok(memberService.getMembers(householdId));
+    public ResponseEntity<List<MemberDTO>> getMembers(
+            @PathVariable Long householdId,
+            @RequestHeader("X-User-Id") Long userId
+    ) {
+        return ResponseEntity.ok(memberService.getMembers(householdId, userId));
     }
 }

@@ -15,13 +15,10 @@ public interface HouseholdMemberRepository extends JpaRepository<HouseholdMember
     @Query("select m from HouseholdMember m where m.household.id = :householdId")
     List<HouseholdMember> findByHouseholdId(@Param("householdId") Long householdId);
 
-    boolean existsByHouseholdAndUserId(Household household, Long userId);
+    @Query("select m from HouseholdMember m join fetch m.household where m.userId = :userId")
+    List<HouseholdMember> findByUserId(@Param("userId") Long userId);
 
     Optional<HouseholdMember> findByUserIdAndHousehold(Long userId, Household household);
-
-    List<HouseholdMember> findByUserId(Long userId);
-
-    Optional<HouseholdMember> findByHouseholdAndRole(Household household, HouseholdRole role);
 
     Optional<HouseholdMember> findByUserIdAndHouseholdId(Long userId, Long householdId);
 }

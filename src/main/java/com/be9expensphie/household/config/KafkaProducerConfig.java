@@ -1,8 +1,6 @@
 package com.be9expensphie.household.config;
 
-import com.be9expensphie.common.event.EmailEvent;
 import com.be9expensphie.common.event.HouseholdMemberEvent;
-import com.be9expensphie.common.event.UserEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;

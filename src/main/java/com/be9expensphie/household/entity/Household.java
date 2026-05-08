@@ -1,6 +1,5 @@
 package com.be9expensphie.household.entity;
 
-import com.be9expensphie.household.enums.HouseholdRole;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,14 +7,18 @@ import java.util.List;
 
 @Entity
 @Table(name = "household")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString(exclude = "members")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Household {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(unique = true, nullable = false)

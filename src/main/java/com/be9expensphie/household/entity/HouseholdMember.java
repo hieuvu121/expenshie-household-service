@@ -10,14 +10,18 @@ import lombok.*;
     uniqueConstraints = @UniqueConstraint(columnNames = {"household_id", "user_id"}),
     indexes = @Index(name = "idx_user_id", columnList = "user_id")
 )
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString(exclude = "household")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class HouseholdMember {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Enumerated(EnumType.STRING)

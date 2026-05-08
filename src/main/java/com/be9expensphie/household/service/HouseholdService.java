@@ -11,7 +11,6 @@ import com.be9expensphie.household.enums.HouseholdRole;
 import com.be9expensphie.household.producer.HouseholdMemberEventProducer;
 import com.be9expensphie.household.repository.HouseholdMemberRepository;
 import com.be9expensphie.household.repository.HouseholdRepository;
-import com.be9expensphie.household.repository.UserSummaryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
