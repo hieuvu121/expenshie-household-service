@@ -11,7 +11,10 @@ import com.be9expensphie.household.enums.HouseholdRole;
 import com.be9expensphie.household.producer.HouseholdMemberEventProducer;
 import com.be9expensphie.household.repository.HouseholdMemberRepository;
 import com.be9expensphie.household.repository.HouseholdRepository;
-import jakarta.transaction.Transactional;
+// Spring's annotation, not jakarta.transaction.Transactional, which has no
+// readOnly attribute. Behaviour for the plain @Transactional uses below is the
+// same; only the read-only hint is additional.
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -83,17 +86,11 @@ public class HouseholdService {
                 .build();
     }
 
-    @Transactional
+    // readOnly matters here: without it MySQL never gets the read-only hint and
+    // Hibernate holds dirty-check state for everything loaded, then flushes at
+    // commit for a request that writes nothing.
+    @Transactional(readOnly = true)
     public List<HouseholdDTO> getHousehold(Long userId) {
-        return householdMemberRepository.findByUserId(userId)
-                .stream()
-                .map(m -> HouseholdDTO.builder()
-                        .id(m.getHousehold().getId())
-                        .name(m.getHousehold().getName())
-                        .role(m.getRole().name())
-                        .code(m.getHousehold().getCode())
-                        .memberId(m.getId())
-                        .build())
-                .toList();
+        return householdMemberRepository.findHouseholdsOfUser(userId);
     }
 }
