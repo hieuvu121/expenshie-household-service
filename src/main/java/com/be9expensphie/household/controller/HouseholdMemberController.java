@@ -22,4 +22,23 @@ public class HouseholdMemberController {
     ) {
         return ResponseEntity.ok(memberService.getMembers(householdId, userId));
     }
+
+    /**
+     * Removes a member, or leaves the household when memberId is the caller's
+     * own membership — the service authorizes both against the same path.
+     *
+     * X-User-Id is injected by the gateway's JwtAuthenticationFilter and is
+     * never accepted from the client, so it identifies the requester; memberId
+     * identifies the membership being retired, which is not the same thing as
+     * a user id.
+     */
+    @DeleteMapping("/{householdId}/members/{memberId}")
+    public ResponseEntity<Void> removeMember(
+            @PathVariable Long householdId,
+            @PathVariable Long memberId,
+            @RequestHeader("X-User-Id") Long userId
+    ) {
+        memberService.removeMember(householdId, memberId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }
