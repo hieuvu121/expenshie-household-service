@@ -4,6 +4,9 @@ import com.be9expensphie.household.dto.MemberDTO;
 import com.be9expensphie.household.entity.HouseholdMember;
 import com.be9expensphie.household.entity.UserSummary;
 import com.be9expensphie.household.enums.HouseholdRole;
+import com.be9expensphie.household.exception.ConflictException;
+import com.be9expensphie.household.exception.ForbiddenException;
+import com.be9expensphie.household.exception.NotFoundException;
 import com.be9expensphie.household.producer.HouseholdMemberEventProducer;
 import com.be9expensphie.household.repository.HouseholdMemberRepository;
 import com.be9expensphie.household.repository.HouseholdRepository;
@@ -74,15 +77,15 @@ public class HouseholdMemberService {
     public void removeMember(Long householdId, Long targetMemberId, Long requestingUserId) {
         HouseholdMember requester = memberRepo
                 .findByUserIdAndHouseholdIdAndRemovedAtIsNull(requestingUserId, householdId)
-                .orElseThrow(() -> new RuntimeException("Access denied: not a member of this household"));
+                .orElseThrow(() -> new ForbiddenException("Not a member of this household"));
 
         HouseholdMember target = memberRepo
                 .findByIdAndHouseholdIdAndRemovedAtIsNull(targetMemberId, householdId)
-                .orElseThrow(() -> new RuntimeException("Member not found in this household"));
+                .orElseThrow(() -> new NotFoundException("Member not found in this household"));
 
         boolean removingSelf = target.getId().equals(requester.getId());
         if (!removingSelf && requester.getRole() != HouseholdRole.ROLE_ADMIN) {
-            throw new RuntimeException("Only admin can remove another member");
+            throw new ForbiddenException("Only admin can remove another member");
         }
 
         // Applies to an admin leaving voluntarily as much as to one being
@@ -90,7 +93,7 @@ public class HouseholdMemberService {
         // resolve a reviewer and every expense in the household fails.
         if (target.getRole() == HouseholdRole.ROLE_ADMIN
                 && memberRepo.countByHouseholdIdAndRoleAndRemovedAtIsNull(householdId, HouseholdRole.ROLE_ADMIN) <= 1) {
-            throw new RuntimeException("Cannot remove the last admin of this household");
+            throw new ConflictException("Cannot remove the last admin of this household");
         }
 
         target.setRemovedAt(Instant.now());
