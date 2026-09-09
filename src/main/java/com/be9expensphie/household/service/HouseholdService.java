@@ -65,9 +65,25 @@ public class HouseholdService {
         Household household = householdRepository.findByCode(request.getCode())
                 .orElseThrow(() -> new RuntimeException("Household not found"));
 
-        Optional<HouseholdMember> existing = householdMemberRepository.findByUserIdAndHousehold(userId, household);
+        // Unfiltered on purpose: a returning member still has a row, tombstoned
+        // by removeMember(). The (household_id, user_id) unique constraint would
+        // reject an insert for that pair, so the tombstone has to be found and
+        // cleared rather than replaced.
+        Optional<HouseholdMember> existing = householdMemberRepository.findAnyByUserIdAndHousehold(userId, household);
 
-        HouseholdMember member = existing.orElseGet(() -> {
+        HouseholdMember member = existing.map(found -> {
+            if (found.getRemovedAt() == null) {
+                return found;   // already an active member — join is a no-op
+            }
+            found.setRemovedAt(null);
+            found.setRole(HouseholdRole.ROLE_MEMBER);
+            HouseholdMember reinstated = householdMemberRepository.save(found);
+            // Same event as a first-time join: downstream services treat
+            // MEMBER_JOINED as "this member is active now", and expense-service
+            // clears its own tombstone on it.
+            householdMemberEventProducer.publish(reinstated, household, "MEMBER_JOINED");
+            return reinstated;
+        }).orElseGet(() -> {
             HouseholdMember newMember = HouseholdMember.builder()
                     .household(household)
                     .userId(userId)
