@@ -10,12 +10,16 @@ import com.be9expensphie.household.producer.HouseholdMemberEventProducer;
 import com.be9expensphie.household.repository.HouseholdMemberRepository;
 import com.be9expensphie.household.repository.HouseholdRepository;
 import com.be9expensphie.household.repository.UserSummaryRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,9 +44,18 @@ class HouseholdMemberServiceRemovalTest {
     @Mock private HouseholdMemberRepository memberRepo;
     @Mock private HouseholdRepository householdRepo;
     @Mock private UserSummaryRepository userSummaryRepository;
-    @Mock private HouseholdMemberEventProducer producer;
+    private final RecordingProducer producer = new RecordingProducer();
 
     @InjectMocks private HouseholdMemberService service;
+
+    /*
+     * @InjectMocks populates @Mock fields only, and producer is a hand-written
+     * recorder rather than a mock, so it has to be set here.
+     */
+    @BeforeEach
+    void injectRecordingProducer() {
+        ReflectionTestUtils.setField(service, "householdMemberEventProducer", producer);
+    }
 
     private static final Household HOUSEHOLD = Household.builder().id(HOUSEHOLD_ID).build();
 
@@ -80,7 +93,8 @@ class HouseholdMemberServiceRemovalTest {
 
         assertThat(target.getRemovedAt()).isNotNull();
         verify(memberRepo).save(target);
-        verify(producer).publish(target, HOUSEHOLD, "MEMBER_LEFT");
+        assertThat(producer.published).containsExactly(
+                new RecordingProducer.Published(target, HOUSEHOLD, "MEMBER_LEFT"));
     }
 
     @Test
@@ -92,7 +106,8 @@ class HouseholdMemberServiceRemovalTest {
         service.removeMember(HOUSEHOLD_ID, MEMBER_MEMBER_ID, MEMBER_USER_ID);
 
         assertThat(self.getRemovedAt()).isNotNull();
-        verify(producer).publish(self, HOUSEHOLD, "MEMBER_LEFT");
+        assertThat(producer.published).containsExactly(
+                new RecordingProducer.Published(self, HOUSEHOLD, "MEMBER_LEFT"));
     }
 
     @Test
@@ -105,7 +120,7 @@ class HouseholdMemberServiceRemovalTest {
                 .hasMessage("Only admin can remove another member");
 
         verify(memberRepo, never()).save(any());
-        verify(producer, never()).publish(any(), any(), anyString());
+        assertThat(producer.published).isEmpty();
     }
 
     /** Without an admin, expense-service cannot resolve a reviewer and all expense creation fails. */
@@ -120,7 +135,7 @@ class HouseholdMemberServiceRemovalTest {
                 .hasMessage("Cannot remove the last admin of this household");
 
         verify(memberRepo, never()).save(any());
-        verify(producer, never()).publish(any(), any(), anyString());
+        assertThat(producer.published).isEmpty();
     }
 
     /** The guard is about the last admin, not about admins generally. */
@@ -134,7 +149,8 @@ class HouseholdMemberServiceRemovalTest {
         service.removeMember(HOUSEHOLD_ID, ADMIN_MEMBER_ID, ADMIN_USER_ID);
 
         assertThat(target.getRemovedAt()).isNotNull();
-        verify(producer).publish(target, HOUSEHOLD, "MEMBER_LEFT");
+        assertThat(producer.published).containsExactly(
+                new RecordingProducer.Published(target, HOUSEHOLD, "MEMBER_LEFT"));
     }
 
     @Test
@@ -161,6 +177,27 @@ class HouseholdMemberServiceRemovalTest {
                 .hasMessage("Member not found in this household");
 
         verify(memberRepo, never()).save(any());
-        verify(producer, never()).publish(any(), any(), anyString());
+        assertThat(producer.published).isEmpty();
+    }
+
+    /*
+     * A recording subclass rather than @Mock: HouseholdMemberEventProducer is a
+     * concrete class, and the inline mock maker cannot instrument those on JDK
+     * 25 -- every test in this file errored before this was introduced. super
+     * takes nulls because publish() is overridden and never reaches them.
+     */
+    static class RecordingProducer extends HouseholdMemberEventProducer {
+        record Published(HouseholdMember member, Household household, String eventType) {}
+
+        final List<Published> published = new ArrayList<>();
+
+        RecordingProducer() {
+            super(null, null, null);
+        }
+
+        @Override
+        public void publish(HouseholdMember member, Household household, String eventType) {
+            published.add(new Published(member, household, eventType));
+        }
     }
 }
