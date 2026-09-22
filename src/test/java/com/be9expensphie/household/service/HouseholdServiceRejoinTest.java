@@ -13,8 +13,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,9 +44,18 @@ class HouseholdServiceRejoinTest {
 
     @Mock private HouseholdRepository householdRepository;
     @Mock private HouseholdMemberRepository householdMemberRepository;
-    @Mock private HouseholdMemberEventProducer producer;
+    private final RecordingProducer producer = new RecordingProducer();
 
     @InjectMocks private HouseholdService service;
+
+    /*
+     * @InjectMocks populates @Mock fields only, and producer is a hand-written
+     * recorder rather than a mock, so it has to be set here.
+     */
+    @BeforeEach
+    void injectRecordingProducer() {
+        ReflectionTestUtils.setField(service, "householdMemberEventProducer", producer);
+    }
 
     private Household household;
 
@@ -76,7 +88,8 @@ class HouseholdServiceRejoinTest {
 
         assertThat(tombstoned.getRemovedAt()).isNull();
         assertThat(response.getMemberId()).isEqualTo(MEMBER_ID);
-        verify(producer).publish(tombstoned, household, "MEMBER_JOINED");
+        assertThat(producer.published).containsExactly(
+                new RecordingProducer.Published(tombstoned, household, "MEMBER_JOINED"));
     }
 
     /** An active member joining again must not produce a duplicate event. */
@@ -94,7 +107,7 @@ class HouseholdServiceRejoinTest {
         service.joinHousehold(request(), USER_ID);
 
         verify(householdMemberRepository, never()).save(any());
-        verify(producer, never()).publish(any(), any(), anyString());
+        assertThat(producer.published).isEmpty();
     }
 
     @Test
@@ -111,6 +124,27 @@ class HouseholdServiceRejoinTest {
         var response = service.joinHousehold(request(), USER_ID);
 
         assertThat(response.getMemberId()).isEqualTo(MEMBER_ID);
-        verify(producer).publish(any(HouseholdMember.class), any(Household.class), anyString());
+        assertThat(producer.published).hasSize(1);
+    }
+
+    /*
+     * A recording subclass rather than @Mock: HouseholdMemberEventProducer is a
+     * concrete class, and the inline mock maker cannot instrument those on JDK
+     * 25 -- every test in this file errored before this was introduced. super
+     * takes nulls because publish() is overridden and never reaches them.
+     */
+    static class RecordingProducer extends HouseholdMemberEventProducer {
+        record Published(HouseholdMember member, Household household, String eventType) {}
+
+        final List<Published> published = new ArrayList<>();
+
+        RecordingProducer() {
+            super(null, null, null);
+        }
+
+        @Override
+        public void publish(HouseholdMember member, Household household, String eventType) {
+            published.add(new Published(member, household, eventType));
+        }
     }
 }
