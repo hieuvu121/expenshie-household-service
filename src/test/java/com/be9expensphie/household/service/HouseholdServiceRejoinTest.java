@@ -3,7 +3,7 @@ package com.be9expensphie.household.service;
 import com.be9expensphie.household.dto.JoinHouseholdDTO.JoinHouseholdRequestDTO;
 import com.be9expensphie.household.entity.Household;
 import com.be9expensphie.household.entity.HouseholdMember;
-import com.be9expensphie.household.enums.HouseholdRole;
+import com.be9expensphie.common.enums.HouseholdRole;
 import com.be9expensphie.household.producer.HouseholdMemberEventProducer;
 import com.be9expensphie.household.repository.HouseholdMemberRepository;
 import com.be9expensphie.household.repository.HouseholdRepository;

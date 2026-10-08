@@ -4,7 +4,7 @@ import com.be9expensphie.common.event.HouseholdMemberEvent;
 import com.be9expensphie.household.entity.Household;
 import com.be9expensphie.household.entity.HouseholdMember;
 import com.be9expensphie.household.entity.UserSummary;
-import com.be9expensphie.household.enums.HouseholdRole;
+import com.be9expensphie.common.enums.HouseholdRole;
 import com.be9expensphie.household.repository.UserSummaryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

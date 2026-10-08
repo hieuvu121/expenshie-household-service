@@ -3,7 +3,7 @@ package com.be9expensphie.household.service;
 import com.be9expensphie.household.dto.MemberDTO;
 import com.be9expensphie.household.entity.HouseholdMember;
 import com.be9expensphie.household.entity.UserSummary;
-import com.be9expensphie.household.enums.HouseholdRole;
+import com.be9expensphie.common.enums.HouseholdRole;
 import com.be9expensphie.household.exception.ConflictException;
 import com.be9expensphie.household.exception.ForbiddenException;
 import com.be9expensphie.household.exception.NotFoundException;

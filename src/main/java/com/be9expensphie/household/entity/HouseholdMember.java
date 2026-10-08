@@ -1,6 +1,6 @@
 package com.be9expensphie.household.entity;
 
-import com.be9expensphie.household.enums.HouseholdRole;
+import com.be9expensphie.common.enums.HouseholdRole;
 import jakarta.persistence.*;
 import lombok.*;
 
