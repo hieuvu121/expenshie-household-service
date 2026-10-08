@@ -1,6 +1,6 @@
 package com.be9expensphie.household.dto;
 
-import com.be9expensphie.household.enums.HouseholdRole;
+import com.be9expensphie.common.enums.HouseholdRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

@@ -3,7 +3,7 @@ package com.be9expensphie.household.repository;
 import com.be9expensphie.household.dto.HouseholdDTO;
 import com.be9expensphie.household.entity.Household;
 import com.be9expensphie.household.entity.HouseholdMember;
-import com.be9expensphie.household.enums.HouseholdRole;
+import com.be9expensphie.common.enums.HouseholdRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
